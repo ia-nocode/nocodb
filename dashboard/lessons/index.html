@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            width: 100%;
+            height: 4px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #f0f0f0;
+            overflow: hidden;
+            display: none;
+        }
+        .loader::after {
+            content: '';
+            width: 40%;
+            height: 100%;
+            background: #3b82f6;
+            position: absolute;
+            left: -40%;
+            animation: loading 1s linear infinite;
+        }
+        @keyframes loading {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
+    </style>
+    <script>
+        // Add this at the beginning
+        if (!sessionStorage.getItem('authToken')) {
+            window.location.href = '/dev/nocodb/';
+        }
+    </script>
+</head>
+<body class="bg-gray-100">
+    <div id="global-menu"></div>
+    <div class="loader" id="loader"></div>
+    <div class="container mx-auto p-8">
+        <nav class="mb-8">
+            <a href="../main/" class="text-blue-600 hover:text-blue-800">← Back to Courses</a>
+        </nav>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const courseData = JSON.parse(localStorage.getItem('courseData'));
+        console.log('Course Data:', courseData); // Add debug logging
+        
+        if (courseData) {
+            const courseHeader = `
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                    ${courseData.image ? `<img src="${courseData.image}" alt="${courseData.title}" class="w-full h-48 object-cover">` : ''}
+                    <div class="p-6">
+                        <h1 class="text-2xl font-bold mb-2">${courseData.title}</h1>
+                        ${courseData.description ? `<p class="text-gray-600">${courseData.description}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('results').innerHTML = courseHeader;
+            document.getElementById('results').innerHTML += '<div id="lessons-container"></div>';
+        }
+
+        (async function() {
+            const loader = document.getElementById('loader');
+            const options = {
+                method: 'GET',
+                headers: {
+                    'xc-token': 'ACOP2g7fcdjz6sBWRDxNmbDX1GfTuha4bahn_YZi'
+                }
+            };
+
+            // Update viewId retrieval to use courseData
+            const viewId = courseData?.viewId;
+            console.log('ViewId:', viewId); // Add debug logging
+
+            if (!viewId) {
+                document.getElementById('results').textContent = 'Error: No view ID found. Please return to the courses page and try again.';
+                return;
+            }
+
+            loader.style.display = 'block';
+            try {
+                const response = await fetch(`https://app.nocodb.com/api/v2/tables/me720mux88az8u4/records?viewId=${viewId}`, options);
+                const data = await response.json();
+                let cards = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">';
+
+                data.list.forEach(item => {
+                    cards += `
+                        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                            <div class="p-6">
+                                <span class="text-sm text-blue-600 mb-2 block">${item.Courses?.Title || 'No Course'}</span>
+                                <h2 class="text-xl font-bold mb-4">${item.Title}</h2>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Lesson ID: ${item.Id}</span>
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                        Course ID: ${item.Courses?.Id || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                cards += '</div>';
+                document.getElementById('lessons-container').innerHTML = cards;
+            } catch (err) {
+                console.error(err);
+                document.getElementById('results').textContent = 'Error: ' + err.message;
+            } finally {
+                loader.style.display = 'none';
+            }
+        })();
+    </script>
+    <script src="../loadMenu.js"></script>
+</body>
+</html>

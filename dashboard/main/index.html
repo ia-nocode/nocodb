@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            width: 100%;
+            height: 4px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #f0f0f0;
+            overflow: hidden;
+            display: none;
+        }
+        .loader::after {
+            content: '';
+            width: 40%;
+            height: 100%;
+            background: #3b82f6;
+            position: absolute;
+            left: -40%;
+            animation: loading 1s linear infinite;
+        }
+        @keyframes loading {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
+    </style>
+    <script>
+        // Add this at the beginning
+        if (!sessionStorage.getItem('authToken')) {
+            window.location.href = '/dev/nocodb/';
+        }
+    </script>
+</head>
+<body class="bg-gray-100">
+    <div id="global-menu"></div>
+    <div class="loader" id="loader"></div>
+    <div id="results" class="container mx-auto p-8"></div>
+
+    <script>
+        function goToLessons(viewId, title, description, imageUrl) {
+            const courseData = {
+                viewId: viewId,
+                title: title,
+                description: description,
+                image: imageUrl
+            };
+            localStorage.setItem('courseData', JSON.stringify(courseData));
+            window.location.href = '../lessons';
+        }
+
+        const loader = document.getElementById('loader');
+        const options = {
+            method: 'GET',
+            headers: {
+                'xc-token': 'ACOP2g7fcdjz6sBWRDxNmbDX1GfTuha4bahn_YZi'
+            }
+        };
+
+        loader.style.display = 'block';
+        fetch('https://app.nocodb.com/api/v2/tables/m8inid9rp2tzw5m/records', options)
+            .then(response => response.json())
+            .then(response => {
+                const data = response.list;
+                let cards = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">';
+
+                data.forEach(item => {
+                    const thumbnailUrl = item.Image && item.Image.length > 0 ? 
+                        item.Image[0].thumbnails.card_cover.signedUrl : '';
+                    cards += `
+                        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                            <img src="${thumbnailUrl}" alt="${item.Title}" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <h2 class="text-xl font-bold mb-2">${item.Title}</h2>
+                                <p class="text-gray-600">${item.Description || 'No description available'}</p>
+                                <button onclick="goToLessons('${item.viewId}', '${item.Title}', '${item.Description || ''}', '${thumbnailUrl}')" class="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition duration-300">
+                                    See Lessons
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                cards += '</div>';
+                document.getElementById('results').innerHTML = cards;
+                loader.style.display = 'none';
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('results').textContent = 'Error: ' + err.message;
+                loader.style.display = 'none';
+            });
+    </script>
+    <script src="../loadMenu.js"></script>
+</body>
+</html>
