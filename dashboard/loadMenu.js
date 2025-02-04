@@ -4,8 +4,8 @@ function handleLogout() {
     sessionStorage.removeItem('authToken');
     
     // Clear browser history
-    history.replaceState(null, null, '/dev/nocodb/');
-    window.location.href = '/dev/nocodb/';
+    history.replaceState(null, null, '/nocodb/');
+    window.location.href = '/nocodb/';
 }
 
 (async function loadGlobalMenu() {
