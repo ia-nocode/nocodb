@@ -43,7 +43,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (sessionStorage.getItem('authToken')) {
-                window.location.href = '/dev/nocodb/dashboard/main/';
+                window.location.href = '/nocodb/dashboard/main/';
                 return;
             }
 
@@ -58,7 +58,7 @@
                 try {
                     const authToken = await getAuthToken();
                     sessionStorage.setItem('authToken', authToken);
-                    window.location.href = '/dev/nocodb/dashboard/main/';
+                    window.location.href = '/nocodb/dashboard/main/';
                 } catch (error) {
                     submitButton.disabled = false;
                     submitButton.textContent = 'Login';
